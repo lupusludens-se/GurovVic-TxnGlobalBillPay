@@ -1,0 +1,268 @@
+﻿@page "/transactions/transactionList"
+
+@using CustomerPortal.Common.Methods;
+@using CustomerPortal.Models.Token;
+@using CustomerPortal.Models.Transaction;
+@using CustomerPortal.Services;
+
+@inject CommunicationService CommunicationService;
+@inject EmailHelper EmailHelper;
+@inject ISnackbar snackbar;
+@inject NavigationManager NavigationManager
+@inject TokenService TokenService;
+
+@if (Session.IsAuthenticated == false)
+{
+    Session.NavigationPage = NavigationManager.Uri; ;
+    NavigateLogin();
+    return;
+}
+
+@{
+    TransactionsHidden = false;
+}
+
+<TelerikMediaQuery Media="@Session.MediaQuery" OnChange="@((doesMatch) => Session.IsMobileLayout = doesMatch)"/>
+
+<MudOverlay @bind-Visible="@PaymentStarted" DarkBackground="true" ZIndex="9999" />
+
+<TelerikWindow Centered="true" Width="80%" @bind-Visible="@ModalVisible" Modal="true">
+    <WindowTitle>
+        <strong>Transaction Info</strong>
+    </WindowTitle>
+    <WindowActions>
+        <WindowAction Name="Close" @onclick="@ToggleModal"/>
+    </WindowActions>
+    <WindowContent>
+        <div class="grid grid-cols-6 gap-1 mb-2">
+            <div class="col-span-3 m-2 block text-md">
+                <label>Order/Invoice</label>
+                <p>@MobileViewTransaction.orderId</p>
+            </div>
+            <div class="col-span-3 m-2 block text-md">
+                <label>Amount</label>
+                <p>@MobileViewTransaction.StrAmount</p>
+            </div>
+            <div class="col-span-3 m-2 block text-md">
+                <label>Currency</label>
+                <p>@MobileViewTransaction.currency</p>
+            </div>
+            <div class="col-span-3 m-2 block text-md">
+                <label>Due Date</label>
+                <p>@MobileViewTransaction.dueDate.ToString("dd MMM yyyy")</p>
+            </div>
+            <div class="col-span-3 m-2 block text-md">
+                <label>Reference</label>
+                <p>@MobileViewTransaction.customerRef</p>
+            </div>
+            @if(!string.IsNullOrEmpty(MobileViewTransaction.invoiceFile))
+            {
+                <div class="col-span-3 m-2 block text-md">
+                    <label>Invoice</label>
+                    <p><a data-testid="invoiceImageSmallLayout" target="_blank" href="@MobileViewTransaction.invoiceFile">Invoice Image</a></p>
+                </div>
+            }
+        </div>
+    </WindowContent>
+</TelerikWindow>
+
+<div class="mt-2" style="padding-bottom: 10px">
+    @if (!Session.IsMobileLayout) 
+    {
+        <!-- Big Layout -->
+        <div hidden="@TransactionsHidden" class="card mt-4">
+            <div class="card-header border-0">
+                <Telerik.Blazor.Components.TelerikGrid Data=@TransactionGridData
+                                                        SelectionMode="@GridSelectionMode.Multiple"
+                                                        SelectedItemsChanged="@((IEnumerable<PendingTransaction> transactionList) => 
+                                                            OnSelect(transactionList.Where(u => u.currency == transactionList.First().currency).ToList()))"
+                                                        SelectedItems="@SelectedTransactions"
+                                                        Height="350px"
+                                                        Pageable="true"
+                                                        Sortable="true"
+                                                        SortMode="@Telerik.Blazor.SortMode.Single"
+                                                        OnStateInit="@((GridStateEventArgs<PendingTransaction> args) => OnStateInitHandler(args))"
+                                                        PageSize="Session.PageSize"
+                                                        OnRowRender="@OnRowRenderHandler"
+                                                        @ref="@GridRef">
+                    <GridToolBarTemplate>
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Pending Transactions</h3>
+                        <br /> 
+                        <span class="text-sm text-gray-500">
+                                To pay an invoice, select the item(s) to pay and select an account to use for payment. Then, click "Pay Selected Items" at the bottom of the form.
+                        </span>
+                        <span class="k-toolbar-spacer"></span>
+                        <GridSearchBox />
+                    </GridToolBarTemplate>
+                    <GridColumns>
+                        <GridCheckboxColumn Width="33px" CheckBoxOnlySelection="true" />
+                        <Telerik.Blazor.Components.GridColumn Title="Order/Invoice" Width="150px" Field="orderId" />
+                        <Telerik.Blazor.Components.GridColumn Title="Amount" Width="125px" Field="StrAmount" OnCellRender="@RightJustifyCell" />
+                        <Telerik.Blazor.Components.GridColumn Title="Currency" Width="125px" Field="currency" />
+                        <Telerik.Blazor.Components.GridColumn Title="Due Date" Width="125px" Field="StrDueDate" />
+                        <Telerik.Blazor.Components.GridColumn Width="200px" Title="Reference" Field="customerRef" />
+                        <Telerik.Blazor.Components.GridColumn Field="invoiceFile" Title="Invoice" Width ="250px" Editable="false" Sortable="false">
+                            <Template>
+                                @{
+                                    if (context is PendingTransaction transaction && !string.IsNullOrEmpty(transaction.invoiceFile))
+                                    {
+                                        @((MarkupString)$"<a href=\"{transaction.invoiceFile}\" target=\"_blank\" class=\"text-primary\">Invoice Image</a>")
+                                    }
+                                }
+                            </Template>
+                        </Telerik.Blazor.Components.GridColumn>
+                    </GridColumns>
+                </Telerik.Blazor.Components.TelerikGrid>
+            </div>
+        </div>
+        <div style="z-index:9999; position:relative">
+            <TelerikLoaderContainer Visible="@PaymentStarted" Text="Processing transaction..." Size="@ThemeConstants.Loader.Size.Large"></TelerikLoaderContainer>
+        </div>
+        <div class="card my-4">
+            <div class="card-header border-0">
+                <Telerik.Blazor.Components.TelerikGrid Data=@BankTokensList
+                                                        Height="325px"
+                                                        Pageable="true"
+                                                        Sortable="true"
+                                                        SelectionMode="@GridSelectionMode.Single"
+                                                        SelectedItemsChanged="@((IEnumerable<BankAccountToken> token) => OnSelectBankAccount(token))"
+                                                        SortMode="@Telerik.Blazor.SortMode.Single"
+                                                        PageSize=Session.PageSize
+                                                        OnRowRender="@OnBankRowRenderHandler"
+                                                        @ref="@BankGridRef">
+                    <GridToolBarTemplate>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Bank Accounts</h3>
+                        <span class="k-toolbar-spacer"></span>
+                        <GridSearchBox />
+                    </GridToolBarTemplate>
+                    <GridColumns>
+                        <GridCheckboxColumn SelectAll="false" CheckBoxOnlySelection="true" />
+                        <Telerik.Blazor.Components.GridColumn Title="Bank Account Type" Field="accountType" />
+                        <Telerik.Blazor.Components.GridColumn Title="Account Number" Field="DisplayAccountNumber" />
+                        <Telerik.Blazor.Components.GridColumn Title="Customer Name" Field="customerName" />
+                        <Telerik.Blazor.Components.GridColumn Title="Account Name" Field="accountName" />
+                        <Telerik.Blazor.Components.GridColumn Title="Country" Field="country" />
+                        <Telerik.Blazor.Components.GridColumn Title="Currency" Field="currency" />
+                    </GridColumns>
+                </Telerik.Blazor.Components.TelerikGrid>
+            </div>
+        </div>
+        <div class="card mt-4" style="padding-bottom: 10px">
+            <div class="card-header pb-0 border-0">
+                <div class="md:grid md:grid-cols-10">
+                    <div class="col-span-2">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Selected Totals</h3>
+                        <div class="overflow-hidden sm:rounded-md">                              
+                            <MudItem>
+                                <div style="display: flex; align-items: flex-start">
+                                    <MudNumericField @bind-Value="FormattedValue" Variant="Variant.Text" HideSpinButtons="true" id="selectedTotalsNumericField" disabled Style="opacity: 1.0; color: #333" />
+                                </div>
+                            </MudItem>
+                        </div>
+                    </div>
+                    <div class="col-span-2" style="align-self: flex-end">
+                        <button @onclick="Submit" type="button" disabled="@ButtonDisabled" class="@SubmitButtonEnabledClass">
+                            Pay selected items
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else 
+    {
+        <!-- Small Layout -->
+        <div class="card p-0" style="width: 100%">
+            <TelerikGrid Data=@TransactionGridData
+                         SelectionMode="@GridSelectionMode.Multiple"
+                         SelectedItemsChanged="@((IEnumerable<PendingTransaction> transactionList) => 
+                                                    OnSelect(transactionList.Where(u => u.currency == transactionList.First().currency).ToList()))"
+                         SelectedItems="@SelectedTransactions"
+                         Pageable="true"
+                         Sortable="true"
+                         SortMode="@Telerik.Blazor.SortMode.Single"
+                         OnStateInit="@((GridStateEventArgs<PendingTransaction> args) => OnStateInitHandler(args))"
+                         PageSize="Session.PageSize"
+                         OnRowRender="@OnRowRenderHandler"
+                         @ref="@GridRef">
+                <GridToolBarTemplate>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Pending Transactions</h3>
+                    <br /> 
+                    <span class="text-sm text-gray-500">
+                            Tap the view button to view additional transaction details. Tap one or more transactions to select for payment.
+                    </span>
+                    <span class="k-toolbar-spacer"></span>
+                    <GridSearchBox />
+                </GridToolBarTemplate>
+                <GridColumns>
+                    <GridCheckboxColumn Width="33px" CheckBoxOnlySelection="true" />
+                    <Telerik.Blazor.Components.GridColumn Title="Order/Invoice" Width="150px" Field="orderId" />
+                    <Telerik.Blazor.Components.GridColumn Title="Amount" Field="StrAmount" OnCellRender="@RightJustifyCell" Width="150px" />
+                    <GridColumn Title="Due" Field="StrDueDate" />
+                    <GridCommandColumn Title="View" Width="60px">
+                        <div data-testid="smallLayoutViewTransactionButton">
+                            <GridCommandButton Class="btn btn-primary" OnClick="ViewTransaction"><i class="fas fa-eye"></i></GridCommandButton>
+                        </div>
+                    </GridCommandColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+        <div style="z-index:9999; position:relative">
+            <TelerikLoaderContainer Visible="@PaymentStarted" Text="Processing transaction..." Size="@ThemeConstants.Loader.Size.Large"></TelerikLoaderContainer>
+        </div>
+        <div class="card" style="width: 100%">
+            <div class="card-header border-0">
+                <Telerik.Blazor.Components.TelerikGrid Data=@BankTokensList
+                                                        Pageable="true"
+                                                        Sortable="true"
+                                                        SelectionMode="@GridSelectionMode.Single"
+                                                        SelectedItemsChanged="@((IEnumerable<BankAccountToken> token) => OnSelectBankAccount(token))"
+                                                        SortMode="@Telerik.Blazor.SortMode.Single"
+                                                        PageSize=Session.PageSize
+                                                        OnRowRender="@OnBankRowRenderHandler"
+                                                        @ref="@BankGridRef">
+                    <GridToolBarTemplate>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Bank Accounts</h3>
+                        <span class="k-toolbar-spacer"></span>
+                        <GridSearchBox />
+                    </GridToolBarTemplate>
+                    <GridColumns>
+                        <GridCheckboxColumn SelectAll="false" CheckBoxOnlySelection="true" />
+                        <Telerik.Blazor.Components.GridColumn Title="Bank Account Type" Field="accountType" />
+                        <Telerik.Blazor.Components.GridColumn Title="Account Number" Field="DisplayAccountNumber" />
+                        <Telerik.Blazor.Components.GridColumn Title="Account Name" Field="accountName" />
+                        <Telerik.Blazor.Components.GridColumn Title="Currency" Field="currency" />
+                    </GridColumns>
+                </Telerik.Blazor.Components.TelerikGrid>
+            </div>
+        </div>
+        <div class="card mt-4" style="padding-bottom: 10px">
+            <div class="card-header pb-0 border-0">
+                <div class="md:grid md:grid-cols-10">
+                    <div class="col-span-3">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Selected Totals</h3>
+                        <div class="overflow-hidden sm:rounded-md">                              
+                            <MudItem>
+                                <div style="display: flex; align-items: flex-start">
+                                    <MudNumericField @bind-Value="FormattedValue" Variant="Variant.Text" HideSpinButtons="true" id="selectedTotalsNumericField" disabled Style="opacity: 1.0; color: #333" />
+                                </div>
+                            </MudItem>
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <button @onclick="Submit" type="button" disabled="@ButtonDisabled" class="@SubmitButtonEnabledClass">
+                            Pay selected items
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .unselectable-row .k-checkbox {
+        opacity: 0.25;
+        pointer-events: none;
+    }
+</style>

@@ -1,0 +1,23 @@
+﻿@layout TelerikLayout
+@inherits LayoutComponentBase
+
+@using CustomerPortal.Services
+@using CustomerPortal.Models
+
+@inject CustomerService customerService;
+@inject NavigationManager navigationManager;
+
+<MudThemeProvider Theme="CustomerPortal"/>
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div style="position: absolute; background-color: #f4f6f9; top:0px; right: 0px; bottom: 0px; left: 0px">
+    <MudLayout Style="position: absolute">
+        <MudDrawer @bind-Open="@DrawerState" Elevation="3" Style="top: 0px;" Width="260px" Variant="DrawerVariant.Mini" MiniWidth="72px">
+            <NavMenu />
+        </MudDrawer>
+        <MudMainContent Class="px-16 my-2" Style="background-color: #f4f6f9; padding-top: 0px">
+            @Body
+        </MudMainContent>
+    </MudLayout>
+</div>

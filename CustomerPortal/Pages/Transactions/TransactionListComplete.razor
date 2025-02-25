@@ -1,0 +1,71 @@
+﻿@page "/transactions/transactionListcomplete"
+
+@using CustomerPortal.Models.Transaction;
+@using CustomerPortal.Services;
+
+@inject AppService appService;
+@inject CustomerService customerService;
+@inject NavigationManager navigationManager;
+@inject TransactionService transactionService;
+
+@if (Session.IsAuthenticated == false)
+{
+    if (NavigationManager.Uri != null)
+    {
+        Session.NavigationPage = NavigationManager.Uri; ;
+    }
+
+    NavigateLogin();
+    return;
+}
+
+<div class="card mt-4">
+    <div class="card-header border-0">
+        <TelerikLoaderContainer OverlayThemeColor="light"
+                                Visible="@( ShowLoading )"
+                                Text="@null" Class="initial-data-loader">
+            <Template>
+                <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                               Size="@(ThemeConstants.Loader.Size.Large)">
+                </TelerikLoader>
+            </Template>
+        </TelerikLoaderContainer>
+
+        <Telerik.Blazor.Components.TelerikGrid TItem="@CompletedTransaction"
+                                               OnRead="@ReadItems"
+                                               Height="850px"
+                                               Pageable="true"
+                                               Sortable="true"
+                                               SortMode="@Telerik.Blazor.SortMode.Single"
+                                               PageSize="Session.PageSize"
+                                               OnStateInit="@( (GridStateEventArgs<CompletedTransaction> args) => OnGridStateInit(args) )">
+            <GridToolBarTemplate>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Completed Transactions</h3>
+                <span class="k-toolbar-spacer"></span>
+                <GridSearchBox />
+            </GridToolBarTemplate>
+            <GridColumns>
+                <Telerik.Blazor.Components.GridColumn Width="120px" Title="Order/Invoice" Field="orderId" Editable="false" />
+                <Telerik.Blazor.Components.GridColumn Width="110px" Title="Amount" Field="StrAmount" />
+                <Telerik.Blazor.Components.GridColumn Width="100px" Title="Currency" Field="Currency" />
+                <Telerik.Blazor.Components.GridColumn Width="120px" Title="Due Date" Field="StrDueDate" />
+                <Telerik.Blazor.Components.GridColumn Width="140px" Title="Completed Date" Field="StrCreatedDate" />
+                <Telerik.Blazor.Components.GridColumn Width="210px" Title="Reference" Field="customerRef" />
+                <Telerik.Blazor.Components.GridColumn Width="150px" Field="invoiceFile" Title="Invoice" Editable="false" Sortable="false">
+                    <Template>
+                        @{
+                            var transaction = context as CompletedTransaction;
+                            if (!String.IsNullOrEmpty(transaction.invoiceFile))
+                            {
+                                @((MarkupString)$"<a href=\"{transaction.invoiceFile}\" target=\"_blank\" class=\"text-primary\">Invoice Image</a>")
+                            }
+                        }
+                    </Template>
+                </Telerik.Blazor.Components.GridColumn>
+                <GridCommandColumn Title="Details" Width="110px">
+                    <GridCommandButton OnClick="@((args)=> SelectTransaction(args.Item as CompletedTransaction))" Class="btn btn-primary"><i class="fas fa-magnifying-glass"></i> View</GridCommandButton>
+                </GridCommandColumn>
+            </GridColumns>
+        </Telerik.Blazor.Components.TelerikGrid>
+    </div>
+</div>

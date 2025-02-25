@@ -1,0 +1,24 @@
+﻿
+@using System.Net.Http
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using CustomerPortal
+@using CustomerPortal.Shared
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@using MudBlazor 
+
+@inject CustomerPortal.Models.SessionState Session
+@inject Common.Settings.IApplicationSettings Settings
+@inject NavigationManager NavigationManager
+@inject IHttpClientFactory ClientFactory
+//--> Services
+@inject Services.AppService AppService
+@inject Services.CustomerService CustomerService
+@inject Services.ReportingService ResportingService
+@inject Services.TransactionService TransactionService

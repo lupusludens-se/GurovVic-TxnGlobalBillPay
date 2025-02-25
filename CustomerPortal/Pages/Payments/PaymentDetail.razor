@@ -1,0 +1,92 @@
+﻿@page "/paymentdetail"
+@page "/paymentdetail/{transactionId}"
+
+@using Services;
+
+@inject PaymentsService paymentsService;
+
+<div class="card mt-4">
+    <div class="card-header pb-0 border-0">
+        <div class="md:grid md:grid-cols-3 md:gap-6">
+            <div class="md:col-span-1">
+                <div px-4>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Payment detail</h3>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Information on the payment is included below
+                    </p>                    
+                </div>
+            </div>
+            <div class="col-span-2">
+                <div class="overflow-hidden sm:rounded-md">
+                    <div class="px-4 py-5 bg-white sm:p-6">
+                        <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6 sm:col-span-3">
+                                <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                                    <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-gray-500">Payment Id</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">@PaymentTransaction?.ID</dd>
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-gray-500">Settled transaction</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">@PaymentTransaction?.SettledTransactionId</dd>
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                        <dt class="text-sm font-medium text-gray-500">Payment status</dt>
+                                        <dd class="mt-1 text-sm text-gray-900" id="PaymentStatusId">@PaymentTransaction?.PaymentStatus</dd>
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                        <dt class="text-sm font-medium text-gray-500">Payment method</dt>
+                                        <dd class="mt-1 text-sm text-gray-900" id="PaymentMethodId">@PaymentTransaction?.PaymentMethod</dd>
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                        <dt class="text-sm font-medium text-gray-500">Payment amount</dt>
+                                        <dd class="mt-1 text-sm text-gray-900" id="PaymentAmountId">@currencyWithSymbol</dd>
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                        <dt class="text-sm font-medium text-gray-500">Currency</dt>
+                                        <dd class="mt-1 text-sm text-gray-900" id="PaymentCurrencyId">@PaymentTransaction?.Currency</dd>
+                                    </div>
+                                    <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-gray-500">Settled date/time</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">@PaymentTransaction?.SettledDateTime.ToString("dd MMM yyyy")</dd>
+                                    </div>
+                                </dl>
+                            </div>                                
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header pb-0 border-0">
+        <div class="md:grid md:grid-cols-3 md:gap-6">
+            <div class="md:col-span-1">
+                <div px-4>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Bank</h3>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Bank information
+                    </p>                    
+                </div>
+            </div>
+            <div class="col-span-2">
+                <div class="overflow-hidden sm:rounded-md">
+                    <div class="px-4 py-5 bg-white sm:p-6">
+                        <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6 sm:col-span-3">
+                            <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                                <div class="sm:col-span-1">
+                                <dt class="text-sm font-medium text-gray-500">Account</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">@PaymentTransaction?.AccountNumber</dd>
+                                </div>      
+                            </dl>    
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

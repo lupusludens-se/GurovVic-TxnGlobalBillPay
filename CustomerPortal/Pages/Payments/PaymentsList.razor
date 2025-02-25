@@ -1,0 +1,85 @@
+﻿@page "/transactions/paymentsList"
+
+@using CustomerPortal.Common.Methods;
+@using CustomerPortal.Models.Payment;
+@using CustomerPortal.Services;
+
+@inject AppService appService;
+@inject CustomerService customerService;
+@inject NavigationManager navigationManager;
+@inject PaymentsService paymentsService;
+
+@if (Session.IsAuthenticated == false)
+{    
+    if (NavigationManager.Uri != null)
+    {
+        Session.NavigationPage = NavigationManager.Uri; ;
+    }
+
+    NavigateLogin();
+    return;
+}
+else
+{
+    TransactionsHidden = false;
+}
+
+<TelerikMediaQuery Media="@Session.MediaQuery" OnChange="@((doesMatch) => Session.IsMobileLayout = doesMatch)"></TelerikMediaQuery>
+
+<div hidden="@TransactionsHidden" class="card mt-4">
+    @if(!Session.IsMobileLayout)
+    {
+        <div class="card-header border-0">
+            <TelerikGrid TItem="@PaymentTransaction"
+                OnRead="@ReadItems"
+                Height="850px"
+                Pageable="true"
+                Sortable="true"
+                SortMode="@Telerik.Blazor.SortMode.Single"
+                PageSize="Session.PageSize"
+                OnStateInit="@( (GridStateEventArgs<PaymentTransaction> args) => OnGridStateInit(args) )">
+                <GridToolBarTemplate>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Payment History</h3>
+                    <span class="k-toolbar-spacer"></span>
+                    <GridSearchBox />
+                </GridToolBarTemplate>
+                <GridColumns>
+                    <GridColumn Title="Transaction Id" Field="SettledTransactionId" Editable="false" />
+                    <GridColumn Title="Amount" Field="StrAmount" />
+                    <GridColumn Title="Completed Date" Field="StrCreatedDate" />
+                    <GridColumn Title="Currency" Field="Currency" />
+                    <GridColumn Title="Payment Method" Field="PaymentMethod" />
+                    <GridColumn Title="Payment Status" Field="PaymentStatus" />
+                    <GridCommandColumn Title="Details">
+                        <GridCommandButton OnClick="@((args)=> SelectTransaction(args.Item as PaymentTransaction))" Class="btn btn-primary"><i class="fas fa-magnifying-glass"></i> View</GridCommandButton>
+                    </GridCommandColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    }
+    else
+    {
+        <div class="card-header border-0">
+            <TelerikGrid TItem="@PaymentTransaction"
+                OnRead="@ReadItems"
+                Pageable="true"
+                Sortable="true"
+                SortMode="@Telerik.Blazor.SortMode.Single"
+                PageSize="Session.PageSize">
+                <GridToolBarTemplate>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Payment History</h3>
+                    <span class="k-toolbar-spacer"></span>
+                    <GridSearchBox />
+                </GridToolBarTemplate>
+                <GridColumns>
+                    <GridColumn Title="Id" Field="ID" />
+                    <GridColumn Title="Amount" DisplayFormat="{0:C}" Field="Amount" />
+                    <GridColumn Title="Status" Field="PaymentStatus" />
+                    <GridCommandColumn Title="Details">
+                        <GridCommandButton OnClick="@((args)=> SelectTransaction(args.Item as PaymentTransaction))" Class="btn btn-primary"><i class="fas fa-magnifying-glass"></i> View</GridCommandButton>
+                    </GridCommandColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    }
+</div>

@@ -1,0 +1,270 @@
+﻿@page "/createbanktoken"
+
+@using CustomerPortal.Common.Methods;
+@using CustomerPortal.Services;
+
+@inject CommunicationService communicationService;
+@inject EmailHelper emailHelper;
+@inject IJSRuntime jsRuntime;
+@inject ISnackbar snackbar;
+@inject NavigationHelper navigationHelper;
+@inject NavigationManager navigationManager;
+@inject TokenService tokenService;
+
+@if (Session.IsAuthenticated == false)
+{
+    if (NavigationManager.Uri != null)
+    {
+        Session.NavigationPage = NavigationManager.Uri; ;
+    }
+
+    navigationHelper.AddPageToHistory(NavigationManager.Uri);
+    NavigateLogin();
+    return;
+}
+
+<div class="mt-4">
+    <div class="card mt-4 d-flex" hidden="@SectionAccountHidden">
+        <div class="card-header border-0 pb-0 grid grid-cols-3 gap-6">
+            <div class="col-span-1 row-auto">
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Country</h3>
+                <p class="mb-2 mt-1 text-sm text-gray-500">
+                    Please enter the country of the account.
+                </p>
+            </div>
+            <div class="md:mt-0 md:col-span-2">
+                <div class="col-span-6 sm:col-span-4">
+                    <label for="country" class="my-2 block text-md">Country</label>
+                    <select @bind="Country" id="country" name="country" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block sm:text-lg border-gray-300 rounded-md">
+                        <option value="init" disabled selected>Select Country</option>
+                        <option value="AU">Australia</option>
+                        <option value="AT">Austria</option>
+                        <option value="BE">Belgium</option>
+                        <option value="HR">Croatia</option>
+                        <option value="FI">Finland</option>
+                        <option value="FR">France</option>
+                        <option value="DE">Germany</option>
+                        <option value="GR">Greece</option>
+                        <option value="IE">Ireland</option>
+                        <option value="IT">Italy</option>
+                        <option value="LT">Lithuania</option>
+                        <option value="LU">Luxembourg</option>
+                        <option value="NL">Netherlands</option>
+                        <option value="PT">Portugal</option>
+                        <option value="SK">Slovak Republic </option>
+                        <option value="SI">Slovenia</option>
+                        <option value="ES">Spain</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mt-4 d-flex" hidden="@SectionAccountHidden">
+        <div class="card-header border-0 pb-0" hidden="@SectionAccountHidden">
+            <div class="grid grid-cols-3 gap-6" hidden="@ShowBankAccount">
+                <div class="col-span-1 row-auto">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Bank Account</h3>
+                    <p class="mb-2 mt-1 text-sm text-gray-500">
+                        Please enter the account information.
+                    </p>
+                </div>
+                <div class="md:mt-0 md:col-span-2">
+                    <div class="col-span-6 sm:col-span-4">
+                        <TelerikFloatingLabel Text="Account Number *">
+                            <TelerikTextBox Width="100%" @bind-Value="AccountNumber" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                        </TelerikFloatingLabel>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-6" hidden="@HideIBAN">
+                <div class="col-span-1 row-auto">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">IBAN</h3>
+                    <p class="mb-2 mt-1 text-sm text-gray-500">
+                        Please enter the account information.
+                    </p>
+                </div>
+                <div class="md:mt-0 md:col-span-2">
+                    <div class="col-span-6 sm:col-span-4">
+                        <TelerikFloatingLabel Text="IBAN *">
+                            <TelerikTextBox Width="100%" @bind-Value="Iban" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                        </TelerikFloatingLabel>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-6 mt-8 mb-4">
+                <div class="md:col-span-1">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Further Information</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Enter additional information.
+                    </p>
+                </div>
+                <div class="md:mt-0 md:col-span-2">
+                    <div class="grid grid-cols-6 gap-6">
+                        <div class="col-span-6 sm:col-span-3" hidden="@ShowRoutingNumber">
+                            <TelerikFloatingLabel Text="Routing Number">
+                                <TelerikTextBox Width="100%" @bind-Value="RoutingNumber" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                            </TelerikFloatingLabel>
+                        </div>
+                        <div class="col-span-6 sm:col-span-4" hidden="@SectionAccountType">
+                            <label for="last_name" class="my-2 block text-md">Account type</label>
+                            <select @bind="AccountType" id="accountType" name="AccountType" autocomplete="year" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-lg border-gray-300 rounded-md">
+                                <option value="CONSUMER_CHECKING">Consumer checking</option>
+                                <option value="CONSUMER_SAVINGS">Consumer savings</option>
+                                <option value="CORPORATE_CHECKING">Corporate checking</option>
+                                <option value="CORPORATE_SAVINGS">Corporate savings</option>
+                            </select>
+                        </div>
+                        <div class="col-span-6 sm:col-span-3" hidden="@SectionBECSHidden">
+                            <TelerikFloatingLabel Text="BSB Number *">
+                                <TelerikTextBox Width="100%" @bind-Value="BSBNumber" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                            </TelerikFloatingLabel>
+                        </div>
+                        <div class="col-span-6 sm:col-span-4">
+                            <TelerikFloatingLabel Text="Account Name *">
+                                <TelerikTextBox Width="100%" @bind-Value="AccountName" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                            </TelerikFloatingLabel>
+                        </div>
+                        <div class="col-span-6 sm:col-span-4" hidden="@SectionBECSHidden">
+                            <TelerikFloatingLabel Text="Financial Institution *">
+                                <TelerikTextBox Width="100%" @bind-Value="FinancialInstitution" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                            </TelerikFloatingLabel>
+                        </div>
+                        <div class="col-span-6 sm:col-span-4" hidden="@SectionBECSHidden">
+                            <TelerikFloatingLabel Text="Branch Name *">
+                                <TelerikTextBox Width="100%" @bind-Value="BranchName" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                            </TelerikFloatingLabel>
+                        </div>
+                        <div class="col-span-6 sm:col-span-5">
+                            <label for="currency" class="my-2 block text-md">Currency</label>
+                            <select @bind="Currency" id="currency" name="currency" disabled="true" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block sm:text-lg border-gray-300 rounded-md">
+                                <option value="AUD">AUD-Australian Dollar</option>
+                                <option value="EUR">EUR-Euro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4 d-flex" hidden="@SectionNameHidden">
+        <div class="card-header border-0 pb-0" hidden="@SectionNameHidden">
+            <div class="grid grid-cols-3 gap-6">
+                <div class="col-span-1 row-auto">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Name</h3>
+                    <p class="mb-2 mt-1 text-sm text-gray-500">
+                        Most bank accounts require a first and last name or business name
+                    </p>
+                </div>
+                <div class="md:mt-0 md:col-span-2">
+                    <form action="#" method="POST">
+                        <div class="grid grid-cols-6 gap-6 mb-4">
+                            <div class="col-span-6 sm:col-span-3">
+                                <TelerikFloatingLabel Text="First Name *">
+                                    <TelerikTextBox Width="100%" @bind-Value="FirstName" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                                </TelerikFloatingLabel>
+                            </div>
+                            <div class="col-span-6 sm:col-span-3">
+                                <TelerikFloatingLabel Text="Last Name *">
+                                    <TelerikTextBox Width="100%" @bind-Value="LastName" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                                </TelerikFloatingLabel>
+                            </div>
+                            <div class="col-span-3">
+                                <TelerikFloatingLabel Text="Company Name *">
+                                    <TelerikTextBox Width="100%" @bind-Value="CompanyName" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                                </TelerikFloatingLabel>
+                            </div>
+
+                            <div class="col-span-3">
+                                <!-- Spacer -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4 d-flex" hidden="@SectionAddressHidden">
+        <div class="card-header border-0 pb-0" hidden="@SectionAddressHidden">
+            <div class="grid grid-cols-3 gap-6">
+                <div class="col-span-1 row-auto">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Address Information</h3>
+                    <p class="mb-2 mt-1 text-sm text-gray-500">
+                        Enter the address related to the bank account. Some processors require this information.
+                    </p>
+                </div>
+                <div class="md:mt-0 md:col-span-2">
+                    <form action="#" method="POST">
+                        <div class="grid grid-cols-6 gap-6 mb-4">
+
+                            <div class="col-span-3">
+                                <TelerikFloatingLabel Text="Address *">
+                                    <TelerikTextBox Width="100%" @bind-Value="Address1" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                                </TelerikFloatingLabel>
+                            </div>
+                            <div class="col-span-3">
+                                <!-- Spacer -->
+                            </div>
+                            <div class="col-span-6 sm:col-span-3">
+                                <TelerikFloatingLabel Text="City">
+                                    <TelerikTextBox Width="100%" @bind-Value="City" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></TelerikTextBox>
+                                </TelerikFloatingLabel>
+                            </div>
+                            <div class="col-span-6 sm:col-span-3">
+                                <TelerikFloatingLabel Text="State">
+                                    <TelerikTextBox Width="100%" @bind-Value="State"></TelerikTextBox>
+                                </TelerikFloatingLabel>
+                            </div>
+                            <div class="col-span-3">
+                                <TelerikFloatingLabel Text="Zip Code *">
+                                    <TelerikTextBox Width="100%" @bind-Value="PostalCode"></TelerikTextBox>
+                                </TelerikFloatingLabel>
+                            </div>
+                            <div class="col-span-3">
+                                <!-- Spacer -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-end mb-2" hidden="@SectionButtonsHidden">
+        <button type="button" @onclick="ClickCancel" class="btn btn-light mx-2">
+            Cancel
+        </button>
+        <button @onclick="SubmitToken" type="button" disabled="@SubmitButtonDisabled" class="@SubmitButtonEnabledClass">
+            Create
+        </button>
+    </div>
+
+    <div class="k-widget k-window k-window-wrapper telerik-blazor demo-window">
+        <TelerikWindow Width="800px" Height="600px" Centered="true" @bind-Visible=@PresentMandate Modal="true">
+            <WindowTitle>
+                <strong>Direct Debit Mandate</strong>
+            </WindowTitle>
+            <WindowActions>
+                <WindowAction Name="Close" @onclick="CloseTermsWindow" />
+            </WindowActions>
+            <WindowContent>
+                <div>
+                    <b>The selected country requires a direct debit approval prior to transaction processing</b>
+                </div>
+                <pre style="white-space: pre-wrap;">
+                    @TermsText
+                </pre>
+                <div>
+                    <br />
+                    <TelerikCheckBox Id="selectAllCheckbox"
+                                     Value="@TermsAccepted"
+                                     ValueChanged="@((bool value) => TermsChanged(value))"
+                                     Enabled="@TermsReady">
+                    </TelerikCheckBox>
+                    <label for="selectAllCheckbox">By selecting this box you agree to the above Terms</label>
+                </div>
+            </WindowContent>
+        </TelerikWindow>
+    </div>
+</div>

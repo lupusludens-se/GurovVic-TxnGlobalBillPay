@@ -1,0 +1,94 @@
+﻿@page "/customerupdate"
+
+@using CustomerPortal.Services;
+
+@layout MainLayout;
+
+@inject CredentialService credentialService;
+@inject ISnackbar snackbar;
+@inject TwilioService twilioService;
+
+<div class="mt-4">
+    <div class="card mt-4">
+        <div class="card-header pb-0 border-0">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">Profile Information</h3>
+            @if(ShowPhoneUpdate == true || ShowEmailUpdate == true)
+            {
+                <p class="text-sm font-medium text-gray-500 mt-1">
+                    After inputting new values, validate your identity to continue.
+                </p>
+            }        
+        </div>
+        <div class="card-body pt-1">
+            <div class="grid grid-cols-2 gap-6">
+                <div class="mb-2 mt-0 block text-md col-span-1">
+                    <p class="text-md font-medium leading-6 my-2 text-gray-900">Account Email: @Email</p>
+                    <p class="text-md font-medium leading-6 mt-4 text-gray-900">Phone Number: @PhoneNumber</p>
+                </div>
+                <div class="mb-2 mt-0 block text-md col-span-1">
+                @if (ShowEmailUpdate == true)
+                {
+                    <div class="d-flex">
+                        <TelerikTextBox Width="100%" class="inline-block my-1" @bind-value="@NewEmail" PlaceHolder="New Email"></TelerikTextBox>
+                        <TelerikTextBox Width="100%" class="inline-block my-1 mx-2" @bind-value="@ConfirmEmail" PlaceHolder="Confirm Email"></TelerikTextBox>
+                    </div>
+                }
+                @if (ShowPhoneUpdate == true)
+                {
+                    <div class="d-flex">
+                        <TelerikTextBox Width="100%" class="inline-block my-1" @bind-value="@NewPhone" PlaceHolder="New Phone Number"></TelerikTextBox>
+                        <TelerikTextBox Width="100%" class="inline-block my-1 mx-2" @bind-value="@ConfirmPhone" PlaceHolder="Confirm Phone Number"></TelerikTextBox>
+                    </div>
+                }
+                </div>            
+            </div>
+        </div>
+    </div>
+    @if (ShowPhoneUpdate == true || ShowEmailUpdate == true)
+    {
+        <div class="flex justify-end pb-2">
+                <button @onclick="StartPhoneValidation" disabled="@StartValidationDisabled" type="button" class="btn btn-primary mx-2">
+                Verify Identity
+            </button>
+            <button @onclick="SubmitInfo" type="button" disabled="@SubmitDisabled" class="@SubmitClass">
+                Update Information
+            </button>
+        </div>
+    }
+</div>
+
+<div class="k-widget k-window k-window-wrapper telerik-blazor demo-window">
+    <TelerikWindow Width="500px" Height="300px" Centered="true" @bind-Visible=@PinWindowVisible Modal="true">
+        <WindowTitle>
+            <strong>Enter the PIN Number sent to you</strong>
+        </WindowTitle>
+        <WindowActions>
+            <WindowAction Name="Close" @onclick="ClosePinWindow" />
+        </WindowActions>
+        <WindowContent>
+            <div>
+                <div class="mt-1 flex rounded-md shadow-sm">
+                    <div class="relative flex items-stretch flex-grow focus-within:z-10">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+
+                            <img src="../images/tailwindicons/device-mobile.svg" />
+
+                        </div>
+                        <input @bind="PIN" type="text" name="PIN" id="PIN" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full rounded-none rounded-l-md pl-10 sm:text-3xl border-gray-300" placeholder="000000">
+                    </div>
+                    <button @onclick="ValidatePIN" class="w-40 -ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+
+                        <img src="../images/tailwindicons/chevron-double-right.svg" />
+                        <span>Submit</span>
+                    </button>
+                    <button @onclick="SendCode" class="relative inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-r-md text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
+
+                        <img src="../images/tailwindicons/external-link.svg" />
+                        <span>Send again</span>
+                    </button>
+                </div>
+                <label for="email" class="block text-sm font-medium text-gray-700">By using a device to validate your email, we are making your transaction more secure.</label>
+            </div>
+        </WindowContent>
+    </TelerikWindow>
+</div>

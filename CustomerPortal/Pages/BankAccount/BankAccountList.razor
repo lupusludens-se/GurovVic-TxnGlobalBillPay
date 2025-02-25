@@ -1,0 +1,56 @@
+﻿@page "/BankAccount/List"
+@page "/BankAccount/List/{customerId}"
+
+@using CustomerPortal.Services;
+@using Telerik.SvgIcons;
+
+@inject AppService appService;
+@inject ISnackbar snackbar;
+@inject NavigationHelper navigationHelper;
+@inject TokenService tokenService;
+
+@if (Session.IsAuthenticated == false)
+{
+    
+    if (NavigationManager.Uri != null)
+    {
+        Session.NavigationPage = NavigationManager.Uri; ;
+    }
+
+    NavigateLogin();
+    return;
+}
+else
+{
+    TokensHidden = false;
+}
+
+<div class="card mt-4">
+    <div class="card-header border-0">
+        <Telerik.Blazor.Components.TelerikGrid Data=@BankAccountGridData
+                                    Height="850px"
+                                    Pageable="true"
+                                    Sortable="true"
+                                    SortMode="@Telerik.Blazor.SortMode.Single"
+                                    PageSize=Session.PageSize
+                                    OnDelete="@DeleteBankToken"
+                                    @ref="@GridRef">
+            <GridToolBarTemplate>
+                <h3 class="text-lg font-medium leading-6 text-gray-900">Bank Accounts</h3>
+                <span class="k-toolbar-spacer"></span> @* add this spacer to keep the searchbox on the right *@
+                <GridSearchBox />
+            </GridToolBarTemplate>
+            <GridColumns>
+                <Telerik.Blazor.Components.GridColumn Title="Bank Account Type" Field="accountType" />
+                <Telerik.Blazor.Components.GridColumn Title="Account Number" Field="DisplayAccountNumber" />
+                <Telerik.Blazor.Components.GridColumn Title="Customer Name" Field="customerName" />
+                <Telerik.Blazor.Components.GridColumn Title="Account Name" Field="accountName" />
+                <Telerik.Blazor.Components.GridColumn Title="Country" Field="country" />
+                <Telerik.Blazor.Components.GridColumn Title="Currency" Field="currency" />
+                <GridCommandColumn>
+                    <GridCommandButton Command="Delete" Icon="@SvgIcon.Trash">Delete</GridCommandButton>
+                </GridCommandColumn>
+            </GridColumns>
+        </Telerik.Blazor.Components.TelerikGrid>
+    </div>
+</div>

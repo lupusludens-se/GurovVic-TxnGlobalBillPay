@@ -1,0 +1,169 @@
+﻿@page "/"
+
+@using CustomerPortal.Models.Reporting;
+@using CustomerPortal.Models.Transaction;
+@using CustomerPortal.Services;
+@using CustomerPortal.Common.Methods;
+
+@inject ReportingService reportingService;
+
+<TelerikMediaQuery Media="@Session.MediaQuery" OnChange="@((doesMatch) => Session.IsMobileLayout = doesMatch)"></TelerikMediaQuery>
+<link rel="shortcut icon" href="~/favicon.ico" type="image/x-icon" />
+
+<div class="mt-2">
+    <div class="card mt-4">
+        <div class="">
+            <div class="card-header pb-0 border-0">
+                <h2 class="text-3x1 tracking-tight font-extrabold text-gray-900 sm:text-4x1">
+                    Dashboard
+                </h2>
+            </div>
+            <div class="pb-3 mt-1 pt-0 grid gap-5 lg:grid-cols-2 lg:max-w-none card-body">
+                <div class="flex flex-col rounded-lg overflow-hidden">
+                    <div class="card mb-0 border h-100">
+                        <div class="card-header pt-1 pl-3 p-0 border-0">
+                            <h3 class="mx-2 mt-2 text-lg font-medium leading-6 text-gray-900 d-inline-block">Trending Information</h3>
+                            <button type="button" title="View Pending Transactions" @onclick="NavigatePending" class="justify-end btn-primary btn-sm mx-2 d-inline-block">
+                                <i class="fas fa-clipboard-list"></i>
+                            </button>
+                        </div>
+                        <div class="card-body pt-0">
+                            @if (Data?.ModelData?[0].Count > 0 || Data?.ModelData?[1].Count > 0 || Data?.ModelData?[2].Count > 0)
+                            {
+                                <TelerikChart>
+                                    <ChartTitle Text="Pending Invoices"></ChartTitle>
+                                    <ChartLegend Visible="true" Position="ChartLegendPosition.Top"></ChartLegend>
+                                    <ChartSeriesItems>
+                                        <Telerik.Blazor.Components.ChartSeries Type="ChartSeriesType.Donut"
+                                                                                Data="@Data.ModelData"
+                                                                                Field="@nameof(ModelData.Count)"
+                                                                                CategoryField="@nameof(ModelData.Category)"
+                                                                                ColorField="@nameof(ModelData.SegmentColor)">
+                                            <ChartSeriesTooltip Visible="true">
+                                                <Template>
+                                                    @{
+                                                        foreach (var key in Data.CurrencyDict.Keys)
+                                                        {
+                                                            var cultureInfo = CultureInfoUtils.GetCultureInfo(key);
+                                                            string symbol = cultureInfo.NumberFormat.CurrencySymbol;
+                                                            var item = Data.CurrencyDict[key];
+
+                                                            if (context.Category.ToString() == "Last 7 Days" && item.pendingTransactions7Days > 0)
+                                                            {
+                                                                string invoiceStr = item.pendingTransactions7Days > 1 ? "invoices" : "invoice";
+                                                                <div>
+                                                                    @key Total amount: @($"{symbol}{item.totalAmountDueLast7Days:0.00}") (@item.pendingTransactions7Days @invoiceStr)
+                                                                </div>
+                                                            }
+                                                            else if (context.Category.ToString() == "Last 30 Days" && item.pendingTransactions30Days > 0)
+                                                            {
+                                                                string invoiceStr = item.pendingTransactions30Days > 1 ? "invoices" : "invoice";
+                                                                <div>
+                                                                    @key Total amount: @($"{symbol}{item.totalAmountDueLast30Days:0.00}") (@item.pendingTransactions30Days @invoiceStr)
+                                                                </div>
+                                                            }
+                                                            else if (context.Category.ToString() == "Over 30 Days" && item.pendingTransactionsOver30Days > 0)
+                                                            {
+                                                                string invoiceStr = item.pendingTransactionsOver30Days > 1 ? "invoices" : "invoice";
+                                                                <div>
+                                                                    @key Total amount: @($"{symbol}{item.totalAmountDueOver30Days:0.00}") (@item.pendingTransactionsOver30Days @invoiceStr)
+                                                                </div>
+                                                            }
+                                                        }
+                                                        <div>
+                                                            Total invoices: @((context.DataItem as ModelData).Count)
+                                                        </div>
+                                                    }
+                                                </Template>
+                                            </ChartSeriesTooltip>
+                                            <ChartSeriesLabels Position="ChartSeriesLabelsPosition.OutsideEnd"
+                                                                Visible="true"
+                                                                Background="transparent"
+                                                                Template="chartSeriesLabelTemplate">
+                                            </ChartSeriesLabels>
+                                        </Telerik.Blazor.Components.ChartSeries>
+                                    </ChartSeriesItems>
+                                </TelerikChart>
+                            }
+                            else if (Data?.ModelData?[0].Count == 0 && Data?.ModelData?[1].Count == 0 && Data?.ModelData?[2].Count == 0)
+                            {
+                                <div class="h-100" style ="display: flex; align-items: center; justify-content: center">
+                                    <div style="text-align: center; width: 50%; height: 50%">
+                                        <h4>No Pending Invoices</h4>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col rounded-lg overflow-hidden">
+                    <div class="card mb-0 border">
+                        <div class="card-header pt-1 pl-3 p-0 border-0">
+                            <h3 class="mx-2 mt-2 text-lg font-medium leading-6 text-gray-900 d-inline-block">History</h3>
+                            <button type="button" title="View Completed Transactions" @onclick="NavigateComplete" class="justify-end btn-primary btn-sm mx-2 d-inline-block">
+                                <i class="fas fa-receipt"></i>
+                            </button>
+                            <div style="float: right; padding-top: 5px; padding-right: 10px">
+                                <TelerikDropDownList Data="@HistorySpanDataList"
+                                                         TextField="DisplayText"
+                                                         Value="@SelectedSpan.ID"
+                                                         ValueField="ID"
+                                                         ValueChanged="@( (int v) => ValueChangedHandler(v) )"
+                                                         Width="175px">
+                                </TelerikDropDownList>
+                            </div>
+                        </div>
+                        <div class="card-body pt-0">
+                            <TelerikChart>
+                                <ChartTitle Text="Completed transactions"></ChartTitle>
+                                <ChartLegend Position="ChartLegendPosition.Bottom"></ChartLegend>
+                                <ChartTooltip Visible="true"></ChartTooltip>
+                                <ChartCategoryAxes>
+                                    <ChartCategoryAxis BaseUnit="@ChartCategoryAxisBaseUnit.Months"
+                                                       Type="@ChartCategoryAxisType.Date"
+                                                       Min="@SelectedSpan.StartDate"
+                                                       Max="@SelectedSpan.EndDate">
+                                        <ChartCategoryAxisLabels Format="MM/yy" />
+                                    </ChartCategoryAxis>
+                                </ChartCategoryAxes>
+                                <ChartSeriesItems>
+                                    @if (CompletedTransactionsData != null)
+                                    {
+                                        @foreach(var completedTransaction in CompletedTransactionsData)
+                                        {
+                                            var currency = completedTransaction.FirstOrDefault()?.Currency;
+                                            var seriesName = $"{currency} Transactions";
+
+                                            <ChartSeries Type="ChartSeriesType.Column"
+                                                         Aggregate="@ChartSeriesAggregate.Sum"
+                                                         Data="@completedTransaction"
+                                                         Field="@nameof(CompletedTransaction.amount)"
+                                                         CategoryField="@nameof(CompletedTransaction.CreatedDate)"
+                                                         Name=@seriesName>
+                                                <ChartSeriesTooltip Visible="true">
+                                                    <Template>
+                                                        @{
+                                                            var dateCategory = DateTime.Parse(context.Category.ToString());
+                                                            var currency = (context.DataItem as CompletedTransaction).Currency;
+
+                                                            <div>
+                                                                Total amount: @((context.DataItem as CompletedTransaction).StrAmount)
+                                                            </div>
+                                                            <div>
+                                                                Total invoices: @GetDataPointsFromCategory(dateCategory, currency)?.Count()
+                                                            </div>
+                                                        }
+                                                    </Template>
+                                                </ChartSeriesTooltip>
+                                            </ChartSeries>                    
+                                         }
+                                     }
+                                </ChartSeriesItems>
+                            </TelerikChart>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

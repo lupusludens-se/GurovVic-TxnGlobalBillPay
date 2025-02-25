@@ -1,0 +1,24 @@
+﻿@using CustomerPortal.Services
+@using CustomerPortal.Models
+
+@inject CredentialService credentialService;
+@inject CustomerService customerService;
+@inject ProcessorAssignmentsService processorAssignmentsService;
+
+<MudNavMenu Rounded="true" Color="Color.Primary">
+    <div class="imageContainer">
+        <img src="@LogoUrl" style="padding: 5px" class="center" height="140" />
+    </div>
+    <MudNavLink Class="nav-link pb-0 pr-2 pl-2 pt-1" Href="#" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+    <MudNavLink Class="nav-link pb-0 pr-2 pl-2 pt-1" Href="Transactions/transactionlist" Icon="@Icons.Material.Filled.PendingActions">Pending Transactions</MudNavLink>
+    <MudNavLink Class="nav-link pb-0 pr-2 pl-2 pt-1" Href="Transactions/transactionlistcomplete" Icon="@Icons.Material.Filled.ReceiptLong">Completed Transactions</MudNavLink>
+    <MudNavLink Class="nav-link pb-0 pr-2 pl-2 pt-1" Href="Transactions/paymentsList" Icon="@Icons.Material.Filled.Payments">View Payments</MudNavLink>
+    <MudNavGroup Class="sub-menu-gray-bg nav-link pb-0 pr-2 pl-2 pt-1" Icon="@BankAccount" Title="Bank Accounts" HideExpandIcon="true">
+        <MudNavLink Style="background-color: #EFF2F4" Href="/BankAccount/List" Icon="@Icons.Material.Filled.AccountBalance">My Bank Accounts</MudNavLink>
+        <MudNavLink Style="background-color: #EFF2F4" Href="/CreateBankToken" Icon="@AddBank">Add Bank Account</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Class="sub-menu-gray-bg nav-link pb-0 pr-2 pl-2 pt-1" Icon="@Icons.Filled.Settings" Title="User Options" HideExpandIcon="true">
+        <MudNavLink Style="background-color: #EFF2F4" Href="/customerupdate" Icon="@Icons.Material.Filled.Edit">Edit My Info</MudNavLink>
+        <MudNavLink Style="background-color: #EFF2F4" Href="/signout" Icon="@Icons.Material.Filled.Logout">Sign Out</MudNavLink>
+    </MudNavGroup>
+</MudNavMenu>

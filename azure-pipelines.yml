@@ -1,0 +1,92 @@
+variables:
+  ${{ if endsWith( variables['Build.SourceBranchName'], 'main' ) }}: 
+    serviceConnection: ess-tenant-service-connection
+    environment: prd
+    resourceGroup: billpay-prd 
+  ${{ elseif endsWith( variables['Build.SourceBranchName'], 'preprod' ) }}: 
+    serviceConnection: ess-tenant-service-connection
+    environment: uat
+    resourceGroup: billpay-preprod       
+  ${{ else }}: 
+    serviceConnection: ess-tenant-service-connection
+    environment: dev
+    resourceGroup: billpay-dev
+
+pr: none
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+    - preprod    
+  paths:
+    exclude:
+    - cicd
+
+pool:
+  vmImage: ubuntu-latest
+  tag: $(Build.BuildId)
+
+stages:
+
+- stage: ApplicationBuild
+  displayName: Build and Push Application
+  jobs:  
+  - job: Build
+    displayName: Build and Publish Application
+    steps:   
+ 
+    - task: DotNetCoreCLI@2
+      displayName: Restore
+      inputs:
+        command: restore
+        projects: '**/CustomerPortal.csproj'
+        feedsToUse: 'config'
+        nugetConfigPath: 'CustomerPortal/NuGet.config'
+        externalFeedCredentials: 'TelerikFeed'
+
+    - task: DotNetCoreCLI@2
+      displayName: Dotnet Build
+      inputs:
+        command: build
+        arguments: '--configuration Release'
+        projects: '**/CustomerPortal.csproj'
+
+    - task: DotNetCoreCLI@2
+      displayName: Dotnet Publish
+      inputs:
+        command: publish
+        publishWebProjects: false
+        projects: '**/CustomerPortal.csproj'
+        arguments: '--configuration Release -o $(Build.ArtifactStagingDirectory)/build_artifacts'
+        zipAfterPublish: false
+        modifyOutputPath: false
+
+    - task: ArchiveFiles@2
+      displayName: "Archive files"
+      inputs:
+        rootFolderOrFile: "$(Build.ArtifactStagingDirectory)/build_artifacts"
+        includeRootFolder: false
+        archiveFile: "$(Build.ArtifactStagingDirectory)/build$(Build.BuildId).zip"
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/build$(Build.BuildId).zip'
+        artifactName: 'drop'        
+
+    - task: AzureRMWebAppDeployment@4
+      displayName: Azure App Service Deploy
+      inputs:
+        ConnectionType: 'AzureRM'      
+        azureSubscription: $(serviceConnection)
+        appType: 'webApp'
+        WebAppName: global-bill-pay-customer-portal-$(environment)
+        packageForLinux: '$(Build.ArtifactStagingDirectory)/*.zip'  
+
+    - task: AzureAppServiceManage@0
+      displayName: Start Customer Portal
+      inputs:
+        azureSubscription: '$(serviceConnection)'
+        Action: 'Start Azure App Service'
+        WebAppName: global-bill-pay-customer-portal-$(environment)       

@@ -1,0 +1,27 @@
+{
+  "name": "playwright",
+  "version": "1.0.0",
+  "description": "end-to-end test automation",
+  "scripts": {
+    "playwright:tests": "npx playwright test --reporter=list",
+    "playwright:tests:rerun": "npx playwright test --reporter=list --last-failed",
+    "playwright:tests:only:changed": "npx playwright test --reporter=list --only-changed",
+    "playwright:tests:headed": "npx playwright test --headed && npx playwright show-report",
+    "playwright:tests:tagged": "npx playwright test --grep @not_parallel --workers 1 --reporter=list",
+    "playwright:tests:untagged": "npx playwright test --grep-invert @not_parallel --reporter=list"
+  },
+  "devDependencies": {
+    "@babel/core": "7.24.4",
+    "@babel/preset-env": "7.24.4",
+    "@babel/register": "7.23.7",
+    "@faker-js/faker": "8.4.1",
+    "@playwright/test": "^1.50.1",
+    "cross-env": "^7.0.3",
+    "jest": "29.7.0",
+    "playwright": "^1.50.1"
+  },
+  "dependencies": {
+    "axios": "1.7.4",
+    "dotenv": "^16.4.7"
+  }
+}
