@@ -11,6 +11,7 @@ test('Login page functionality', async ({ page }) => {
   await page.getByRole('img', { name: 'CardSecure' }).click();
 
   // Initial login page checks
+  await expect(page).toHaveTitle("Schneider Electric Payment Portal");
   await expect(page.getByRole('heading')).toContainText('Enter your email');
   await expect(page.getByRole('paragraph')).toContainText('Use your email to begin payment');
   await expect(page.locator('form')).toContainText('Email address');

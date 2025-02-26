@@ -1,6 +1,7 @@
 import { BasePage } from "./BasePage";
 import { CommonTestResources } from "../shared/CommonTestResources";
 import { PinModal } from "./components/PinModal";
+import { expect } from '@playwright/test';
 
 export class LoginPage extends BasePage {
   /**
@@ -12,25 +13,23 @@ export class LoginPage extends BasePage {
     this.resources = new CommonTestResources();
     this.pinModal = new PinModal(page);
     this.logo = page.getByRole("img", { name: "CardSecure" });
+    this.schneiderElectricPaymentPortalTitle = "Schneider Electric Payment Portal";
     this.enterYourEmailHeader = page.getByRole("heading", {
       name: "Enter your email",
     });
-    this.enterYourEmailToBeginPayment = page
+       this.enterYourEmailToBeginPayment = page
       .locator("a")
-      .filter({ hasText: "Use your email to begin" });
+      .filter({ hasText: "Use your email to begin payment" });
     this.emailInput = page.getByLabel("Email address");
     this.submitButton = page.locator('text="Submit"');
     this.pwdInput = page.getByPlaceholder("Enter password");
     this.verificationCompletedText = page.locator(
-      "text=Verification completed"
+      "text=Verification completed. Welcome, power user!"
     );
     this.invalidEmailAddressToastMessage = page.locator(
       "text=You are not a current customer. Please reach out to our administrator to sign up"
     );
     this.passwordTextAboveTheField = page.locator("text=Password");
-       
-    // I added it to verify if pop-up for 3 secs after sending wrong password is here
-    // this.invalidPasswordToastMessage = page.locator("text=The password entered is incorrect.");
     this.invalidPasswordToastMessage = page.getByText("The password entered is incorrect.", { exact: false });
     
     this.closeErrorMessageButton = page
@@ -64,6 +63,10 @@ export class LoginPage extends BasePage {
     await this.page.waitForTimeout(2000);
     await this.pwdInput.click();
     await this.pwdInput.fill(pwd);
+  }
+
+  async checkSchneiderElectricPaymentPortalTitle() {
+    await expect(this.page).toHaveTitle(this.schneiderElectricPaymentPortalTitle);
   }
 
   async isVerificationCompletedVisible() {

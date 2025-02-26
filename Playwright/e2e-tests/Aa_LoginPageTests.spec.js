@@ -14,6 +14,7 @@ test.describe("Login page", () => {
     resources = new CommonTestResources();
     pinModal = new PinModal(page);
     await login.navigate(resources.environmentURL);
+    await login.checkSchneiderElectricPaymentPortalTitle();
   });
 
   test.afterEach(async ({ page }) => {
@@ -33,9 +34,11 @@ test.describe("Login page", () => {
     await expect(login.logo).toBeVisible();
     await login.enterEmail(faker.internet.email());
     await login.clickOnSubmitBtn();
-    await expect(login.invalidEmailAddressToastMessage).toBeVisible({ timeout: 5000 });
+    await login.invalidEmailAddressToastMessage.waitFor();
+    await expect(login.invalidEmailAddressToastMessage).toBeVisible();
     await login.closeErrorMessageButton.click();
-    await expect(login.invalidEmailAddressToastMessage).toBeVisible({ timeout: 5000, visible: false });
+    await login.invalidEmailAddressToastMessage.waitFor();
+    await expect(login.invalidEmailAddressToastMessage).not.toBeVisible();
     await expect(page).toHaveURL(`${resources.environmentURL}/Login/`);
   });
 
@@ -67,11 +70,10 @@ test.describe("Login page", () => {
   test("MFA pop-up attributes presence", async () => {
     await login.enterEmail(resources.mfaEmail);
     await login.clickOnSubmitBtn();
-    const timeout = 5000;
-    await expect(pinModal.enterPinNumberHeader).toBeVisible({ timeout: timeout });
-    await expect(pinModal.pinNumberTextField).toBeVisible({ timeout: timeout });
-    await expect(pinModal.submitBtn).toBeEnabled({ timeout: timeout });
-    await expect(pinModal.sendAgainBtn).toBeEnabled({ timeout: timeout });
-    await expect(pinModal.transactionSecureText).toBeVisible({ timeout: timeout });
+    await expect(pinModal.enterPinNumberHeader).toBeVisible();
+    await expect(pinModal.pinNumberTextField).toBeVisible(); 
+    await expect(pinModal.submitBtn).toBeEnabled(); 
+    await expect(pinModal.sendAgainBtn).toBeEnabled(); 
+    await expect(pinModal.transactionSecureText).toBeVisible(); 
   });
 });

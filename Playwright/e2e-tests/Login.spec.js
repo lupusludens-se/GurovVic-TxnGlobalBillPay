@@ -22,6 +22,7 @@ test.describe("Customer Portal: Login Tests", () => {
   // QGBP-7
   test("should verify the content of the Customer Portal's login page.", async () => {
     await login.navigate(resources.environmentURL);
+    await login.checkSchneiderElectricPaymentPortalTitle();
     await expect(login.logo).toBeVisible({ timeout: 10000 });
     expect(await login.enterYourEmailHeader.innerText()).toEqual(
       resources.commonUItext.ENTER_EMAIL
