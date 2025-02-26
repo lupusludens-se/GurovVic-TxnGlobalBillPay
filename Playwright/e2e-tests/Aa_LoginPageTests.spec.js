@@ -56,7 +56,8 @@ test.describe("Login page", () => {
     await login.clickOnSubmitBtn();
     await login.enterPWD(faker.internet.password());
     await login.clickOnSubmitBtn();
-    await login.isVerificationCompletedVisible();
+    await login.invalidPasswordToastMessage.waitFor();
+    await expect(login.invalidPasswordToastMessage).toBeVisible();
     await expect(page).toHaveURL(`${resources.environmentURL}/Login/`);
   });
 
