@@ -45,6 +45,7 @@ test.describe("Login page", () => {
   test("Valid email accepted", async ({ page }) => {
     await login.enterEmail(resources.email);
     await login.clickOnSubmitBtn();
+    await login.passwordTextAboveTheField.waitFor();
     await expect(login.passwordTextAboveTheField).toBeVisible();
     await expect(login.pwdInput).toBeEmpty();
     await expect(login.submitButton).toBeVisible();
